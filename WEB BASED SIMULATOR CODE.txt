@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WEB BASED SIMULATOR</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+
+        #editor-container {
+            flex: 1;
+            padding: 20px;
+        }
+
+        #console-container {
+            flex: 1;
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: scroll;
+        }
+
+        #register-file {
+            width: 200px;
+            background-color: #eee;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+<div id="editor-container">
+        <h2>WEB BASED SIMULATOR</h2>
+        <textarea id="code" rows="10" cols="50" placeholder="Enter MIPS Assembly Code"></textarea>
+        <button onclick="assemble()">Assemble</button>
+        <button onclick="run()">Run</button>
+    </div>
+
+    <div id="console-container">
+        <h2>Console</h2>
+        <div id="console"></div>
+    </div>
+
+    <div id="register-file">
+        <h2>Register File</h2>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Number</th>
+                <th>Value</th>
+            </tr>
+   
+
+            <script>
+                let registerContent = '';
+                for (let i = 0; i < 32; i++) {
+                    registerContent += `
+                        <tr>
+                            <td>$${['zero', 'at', 'v0', 'v1', 'a0', 'a1', 'a2', 'a3', 't0', 't1', 't2', 't3', 't4', 't5', 't6', 't7', 's0', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 't8', 't9', 'k0', 'k1', 'gp', 'sp', 'fp', 'ra'][i]}</td>
+                            <td>${i}</td>
+                            <td>0x${(i * 0x100000).toString(16).padStart(8, '0')}</td>
+                        </tr>
+                    `;
+                }
+                document.write(registerContent);
+            </script>
+        </table>
+    </div>
+
+  
+    <script>
+        const consoleOutput = document.getElementById('console');
+        const registerFile = document.getElementById('register-file');
+        function assemble() {
+            const code = document.getElementById('code').value;
+
+            const instructions = code.split('\n').filter(line => line.trim() !== '');
+
+            const machineCode = instructions.map(instruction => {
+                const parts = instruction.split(' ');
+                const opcode = parts[0];
+                const operands = parts.slice(1);
+                return translateInstruction(opcode, operands);
+            });
+
+            const assembledCode = machineCode.join('\n');
+            updateConsole(`Assembled code:\n${assembledCode}`);
+            // Update register file 
+            updateRegisterFile();
+        }
+
+        function translateInstruction(opcode, operands) {
+            // Mapping of opcodes to machine code
+            const opcodeToMachineCode = {
+                "ADD": "001000",
+                "SUB": "001001",
+                "MULT": "001010",
+                "SW": "001100",
+                "LW": "001101",
+                "C.LT.D": "001110",
+			    "BLT": "001111",
+			    "J": "010000",
+			    "B": "010001",
+			    "BEQ": "010010",
+            };
+
+            // Translate opcode
+            let machineCode = opcodeToMachineCode[opcode];
+
+            // Translate operands 
+            machineCode += operands.join('');
+
+            return machineCode;
+       
+		};
+
+		class Assembler {
+		public:
+			bool loadProgram(const std::string& filename) {
+				std::ifstream file(filename);
+				if (!file.is_open()) {
+					std::cerr << "Error opening file: " << filename << std::endl;
+					return false;
+				}
+
+        std::string line;
+        while (std::getline(file, line)) {
+            instructions.push_back(parseInstruction(line));
+        }
+        file.close();
+        return true;
+    }
+
+    Instruction parseInstruction(const std::string& line) {
+        std::istringstream ss(line);
+        std::string opcode;
+        std::vector<std::string> operands;
+        if (std::getline(ss, opcode, ' ')) {
+            std::string operand;
+            while (std::getline(ss, operand, ',')) {
+                operands.push_back(operand);
+            }
+        }
+        return Instruction(opcode, operands);
+    }
+
+    std::vector<std::string> translateToMachineCode() {
+        std::vector<std::string> machineCode;
+        for (const auto& instruction : instructions) {
+            std::string translatedInstruction = translateInstruction(instruction);
+            machineCode.push_back(translatedInstruction);
+        }
+        return machineCode;
+    }
+
+private:
+    std::vector<Instruction> instructions;
+
+    std::string translateInstruction(const Instruction& instruction) {
+        
+        std::unordered_map<std::string, std::string> opcodeToMachineCode = {
+            {"ADD", "001000"},
+            {"SUB", "001001"},
+            {"MULT", "001010"},
+			{"DIV", "001100"},
+            {"LW", "001101"},
+			{"C.LT.D", "001110"},
+			{"BLT", "001111"},
+			{"J", "010000"},
+			{"B", "010001"},
+			{"BEQ", "010010"},
+            
+        };
+
+        // Translate opcode
+        std::string machineCode = opcodeToMachineCode[instruction.opcode];
+
+        // Translate operands
+        for (const auto& operand : instruction.operands) {
+        
+            machineCode += operand;
+        }
+
+        return machineCode;
+    }
+};
+
+int main() {
+    Assembler assembler;
+    if (!assembler.loadProgram("assembler.asm")) {
+        return 1;
+    }
+
+    std::vector<std::string> machineCode = assembler.translateToMachineCode();
+    for (const auto& code : machineCode) {
+        std::cout << code << std::endl;
+    }
+
+    return 0;
+}
+
+            const assembledCode = Assembled code: ${code};
+            updateConsole(assembledCode);
+            // Update register file 
+            updateRegisterFile();
+        }
+
+        function run() {
+            // Implement MIPS simulation logic
+            const simulationResult = 'Simulation result: Program executed successfully.';
+            updateConsole(simulationResult);
+            // Update register file 
+            updateRegisterFile();
+        }
+
+        function updateConsole(message) {
+            consoleOutput.innerHTML = <p>${message}</p>;
+        }
+		
+        function updateRegisterFile() {
+            // Implement logic to update register file based on simulation results
+            const registerContent = 'Registers:\n';
+            for (let i = 0; i < 32; i++) {
+                registerContent += Reg${i}: 0x${Math.floor(Math.random() * 100).toString(16)}\n;
+				std::cout << "Reg" << std::dec << i << ": 0x" << std::hex << std::setw(2) << std::setfill('0') << registers[i] << '\n';
+            }
+            registerFile.textContent = registerContent;
+        }
+    </script>
+	
+</body>
+</html>
